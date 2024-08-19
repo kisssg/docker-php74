@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+    php74:
+        build:
+          context: .
+          dockerfile: .Dockerfile-php74
+        volumes:
+            - php-projects:/var/www
+            - ./www:/tmp/www
+            - ./php-conf/php.ini:/usr/local/etc/php/php.ini
+        networks:
+            - app-network
+
+    memcached:
+        image: memcached:alpine
+        ports:
+            - "11211:11211"
+        networks:
+            - app-network
+
+    mysql:
+        image: mysql:5.7
+        environment:
+            MYSQL_ROOT_PASSWORD: rootpassword # Use a secure password in production
+            MYSQL_DATABASE: apollo
+            MYSQL_USER: user
+            MYSQL_PASSWORD: password
+        volumes:
+            - mysql-data:/var/lib/mysql
+            - ./mysql-tmp:/tmp
+            - ./mysql-conf:/etc/mysql/mysql.conf.d
+        ports:
+            - "3306:3306"
+        networks:
+            - app-network
+
+    nginx:
+        image: nginx:alpine
+        ports:
+            - "80:80"
+        volumes:
+            - php-projects:/var/www # To serve your PHP project files
+            - ./nginx:/etc/nginx/conf.d # Assuming your Nginx config files are in the ./nginx directory on your host
+        depends_on:
+            - php74
+        networks:
+            - app-network
+
+    redis:
+        image: redis:alpine
+        ports:
+            - "6379:6379"
+        networks:
+            - app-network
+
+networks:
+    app-network:
+        driver: bridge
+
+volumes:
+    mysql-data:
+    php-projects:

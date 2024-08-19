@@ -1,0 +1,47 @@
+# Use the official PHP 7.4 FPM image as the base
+FROM php:7.4-fpm
+
+# Set proxy environment variables
+ENV HTTP_PROXY="http://192.168.1.111:7890" \
+    HTTPS_PROXY="http://192.168.1.111:7890" \
+    NO_PROXY="admin.enf.local,*.enfsolar.local,*.enfrecycling.local"
+
+# Install system dependencies required for PHP extensions and other utilities
+RUN apt-get update && apt-get install -y \
+    git \
+    libbz2-dev \
+    libzip-dev \
+    zlib1g-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libmagickwand-dev \
+    libmemcached-dev \
+    libssl-dev \
+    libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure and install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) bcmath bz2 calendar ctype curl gd mysqli pdo_mysql zip \
+    && pecl install imagick memcached \
+    && docker-php-ext-enable imagick memcached
+
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
+    composer --version
+
+# Install Node.js
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - && \
+    apt-get update && \
+    apt-get install -y nodejs
+
+# Copy your PHP application code to the container (Adjust the source path as needed)
+COPY . /var/www/
+
+# Set working directory to /var/www/html to allow running commands against your application
+WORKDIR /var/www
+
+# Expose port 9000 and start php-fpm server
+EXPOSE 9000
+CMD ["php-fpm"]
