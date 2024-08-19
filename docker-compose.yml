@@ -7,7 +7,7 @@ services:
           dockerfile: .Dockerfile-php74
         volumes:
             - php-projects:/var/www
-            - ./www:/tmp/www
+            - ssh:/root/.ssh
             - ./php-conf/php.ini:/usr/local/etc/php/php.ini
         networks:
             - app-network
@@ -61,3 +61,4 @@ networks:
 volumes:
     mysql-data:
     php-projects:
+    ssh:
